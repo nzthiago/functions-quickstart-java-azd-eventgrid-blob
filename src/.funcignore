@@ -1,0 +1,33 @@
+*.tmp
+*.pyc
+.pytest_cache/
+node_modules/
+bin/
+obj/
+.vscode/
+.vs/
+.idea/
+.gradle/
+build/
+target/
+.mvn/
+mvnw
+mvnw.cmd
+.azure/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Azure Functions artifacts
+host.json.backup
