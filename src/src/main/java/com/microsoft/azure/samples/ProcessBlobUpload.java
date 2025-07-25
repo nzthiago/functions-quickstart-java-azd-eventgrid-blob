@@ -3,22 +3,17 @@ package com.microsoft.azure.samples;
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
 import com.azure.storage.blob.*;
-import com.azure.storage.blob.models.*;
-import com.azure.identity.*;
 import java.util.logging.Logger;
-import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 /**
- * Azure Functions with Event Grid Blob Trigger.
+ * Azure Functions with Event Grid Blob Trigger using SDK type bindings.
  */
 public class ProcessBlobUpload {
-    
-    private static BlobServiceClient blobServiceClient = null;
-    private static final DefaultAzureCredential credential = new DefaultAzureCredentialBuilder().build();
 
     /**
      * This function is triggered by Event Grid when a blob is created in the unprocessed-pdf container.
-     * It processes the blob and copies it to the processed-pdf container.
+     * It processes the blob and copies it to the processed-pdf container using SDK type bindings.
      */
     @FunctionName("processBlobUpload")
     @StorageAccount("PDFProcessorSTORAGE")
@@ -27,19 +22,22 @@ public class ProcessBlobUpload {
             name = "blob",
             path = "unprocessed-pdf/{name}",
             source = "EventGrid"
-        ) byte[] blobContent,
+        ) InputStream blobContent,
         @BindingName("name") String blobName,
+        @BlobInput(
+            name = "containerClient",
+            path = "processed-pdf",
+            connection = "PDFProcessorSTORAGE"
+        ) BlobContainerClient containerClient,
         final ExecutionContext context) {
 
         Logger logger = context.getLogger();
-        int fileSize = blobContent.length;
         
-        logger.info(String.format("Java Blob Trigger (using Event Grid) processed blob\n Name: %s \n Size: %d bytes", 
-                                  blobName, fileSize));
+        logger.info(String.format("Java Blob Trigger (using Event Grid) processed blob\n Name: %s", blobName));
 
         try {
-            // Copy to processed container - simple demonstration of an async operation
-            copyToProcessedContainer(blobContent, "processed_" + blobName, logger);
+            // Copy to processed container using the bound container client
+            copyToProcessedContainer(blobContent, "processed_" + blobName, containerClient, logger);
             
             logger.info(String.format("PDF processing complete for %s", blobName));
         } catch (Exception error) {
@@ -49,59 +47,22 @@ public class ProcessBlobUpload {
     }
 
     /**
-     * Simple method to demonstrate uploading the processed PDF
+     * Simple method to demonstrate uploading the processed PDF using the bound container client
      */
-    private void copyToProcessedContainer(byte[] blobBuffer, String blobName, Logger logger) {
+    private void copyToProcessedContainer(InputStream blobStream, String blobName, BlobContainerClient containerClient, Logger logger) {
         logger.info(String.format("Starting copy operation for %s", blobName));
         
         try {
-            // Get the reusable BlobServiceClient
-            BlobServiceClient serviceClient = getBlobServiceClient(logger);
-            
-            // Get container client for processed PDFs
-            BlobContainerClient containerClient = serviceClient.getBlobContainerClient("processed-pdf");
-            
-            // Get blob client
+            // Get blob client for the processed blob
             BlobClient blobClient = containerClient.getBlobClient(blobName);
             
-            // Upload the blob
-            blobClient.upload(new ByteArrayInputStream(blobBuffer), blobBuffer.length, true);
+            // Upload the blob from the input stream
+            blobClient.upload(blobStream, true);
             
             logger.info(String.format("Successfully copied %s to processed-pdf container", blobName));
         } catch (Exception error) {
             logger.severe(String.format("Failed to copy %s to processed container: %s", blobName, error.getMessage()));
             throw new RuntimeException(error);
         }
-    }
-
-    /**
-     * Get or create a BlobServiceClient instance
-     */
-    private BlobServiceClient getBlobServiceClient(Logger logger) {
-        if (blobServiceClient == null) {
-            // For local development, use the connection string directly
-            String connectionString = System.getenv("PDFProcessorSTORAGE");
-            
-            if (connectionString == null || connectionString.isEmpty()) {
-                logger.severe("Storage connection string not found. Expected PDFProcessorSTORAGE__serviceUri environment variable.");
-                connectionString = System.getenv("PDFProcessorSTORAGE__serviceUri");
-            }
-            
-            // Check if running locally with Azurite
-            if ("UseDevelopmentStorage=true".equals(connectionString)) {
-                // Use Azurite connection string
-                blobServiceClient = new BlobServiceClientBuilder()
-                    .connectionString(connectionString)
-                    .buildClient();
-            } else {
-                // Create BlobServiceClient using the storage account URL and managed identity credentials
-                blobServiceClient = new BlobServiceClientBuilder()
-                    .endpoint(connectionString)
-                    .credential(credential)
-                    .buildClient();
-            }
-        }
-        
-        return blobServiceClient;
     }
 }

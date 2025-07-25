@@ -20,7 +20,6 @@
         <azure.functions.maven.plugin.version>1.37.0</azure.functions.maven.plugin.version>
         <azure.functions.java.library.version>3.1.0</azure.functions.java.library.version>
         <azure.storage.blob.version>12.28.1</azure.storage.blob.version>
-        <azure.identity.version>1.14.2</azure.identity.version>
         <junit.version>5.10.1</junit.version>
     </properties>
 
@@ -34,11 +33,6 @@
             <groupId>com.azure</groupId>
             <artifactId>azure-storage-blob</artifactId>
             <version>${azure.storage.blob.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-identity</artifactId>
-            <version>${azure.identity.version}</version>
         </dependency>
         
         <!-- Test dependencies -->
