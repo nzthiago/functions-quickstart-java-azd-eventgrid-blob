@@ -21,6 +21,7 @@
         <azure.functions.java.library.version>3.1.0</azure.functions.java.library.version>
         <azure.storage.blob.version>12.28.1</azure.storage.blob.version>
         <junit.version>5.10.1</junit.version>
+        <functionAppName>functions-quickstart-java-azd-eventgrid-blob</functionAppName>
     </properties>
 
     <dependencies>

@@ -32,36 +32,20 @@ public class ProcessBlobUpload {
         final ExecutionContext context) {
 
         Logger logger = context.getLogger();
-        
-        logger.info(String.format("Java Blob Trigger (using Event Grid) processed blob\n Name: %s", blobName));
+
+        logger.info(String.format("Java Blob Trigger (using Event Grid) processed blob\n Name: %s \n", blobName));
 
         try {
-            // Copy to processed container using the bound container client
-            copyToProcessedContainer(blobContent, "processed_" + blobName, containerClient, logger);
-            
-            logger.info(String.format("PDF processing complete for %s", blobName));
-        } catch (Exception error) {
-            logger.severe(String.format("Error processing blob %s: %s", blobName, error.getMessage()));
-            throw new RuntimeException(error);
-        }
-    }
-
-    /**
-     * Simple method to demonstrate uploading the processed PDF using the bound container client
-     */
-    private void copyToProcessedContainer(InputStream blobStream, String blobName, BlobContainerClient containerClient, Logger logger) {
-        logger.info(String.format("Starting copy operation for %s", blobName));
-        
-        try {
+            String processedBlobName = "processed_" + blobName;
             // Get blob client for the processed blob
-            BlobClient blobClient = containerClient.getBlobClient(blobName);
+            BlobClient blobClient = containerClient.getBlobClient(processedBlobName);
             
             // Upload the blob from the input stream
-            blobClient.upload(blobStream, true);
+            blobClient.upload(blobContent, true);
             
-            logger.info(String.format("Successfully copied %s to processed-pdf container", blobName));
+            logger.info(String.format("PDF processing complete for %s", processedBlobName));
         } catch (Exception error) {
-            logger.severe(String.format("Failed to copy %s to processed container: %s", blobName, error.getMessage()));
+            logger.severe(String.format("Error processing blob %s: %s", blobName, error.getMessage()));
             throw new RuntimeException(error);
         }
     }
