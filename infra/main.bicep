@@ -94,6 +94,7 @@ module processor 'app/processor.bicep' = {
         PDFProcessorSTORAGE__credential : 'managedidentity'
         PDFProcessorSTORAGE__serviceUri: storage.outputs.primaryBlobEndpoint
         PDFProcessorSTORAGE__clientId: processorUserAssignedIdentity.outputs.clientId
+        JAVA_ENABLE_SDK_TYPES: true
       }
   }
 }

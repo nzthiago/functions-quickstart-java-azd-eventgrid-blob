@@ -17,9 +17,9 @@
         <java.version>17</java.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <azure.functions.maven.plugin.version>1.37.0</azure.functions.maven.plugin.version>
-        <azure.functions.java.library.version>3.1.0</azure.functions.java.library.version>
-        <azure.storage.blob.version>12.28.1</azure.storage.blob.version>
+        <azure.functions.maven.plugin.version>1.39.0</azure.functions.maven.plugin.version>
+        <azure.functions.java.library.version>3.2.2</azure.functions.java.library.version>
+        <azure.storage.blob.version>12.32.0</azure.storage.blob.version>
         <junit.version>5.10.1</junit.version>
         <functionAppName>functions-quickstart-java-azd-eventgrid-blob</functionAppName>
     </properties>
@@ -35,12 +35,17 @@
             <artifactId>azure-storage-blob</artifactId>
             <version>${azure.storage.blob.version}</version>
         </dependency>
-        
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.17</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -50,7 +55,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.12.1</version>
+                <version>3.14.0</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
@@ -87,7 +92,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>3.5.3</version>
                 <configuration>
                     <useSystemClassLoader>false</useSystemClassLoader>
                 </configuration>
