@@ -21,7 +21,7 @@ languages:
 
 This template repository contains an Azure Functions reference sample using the Blob trigger with Event Grid source type, written in Java and deployed to Azure using the Azure Developer CLI (`azd`). When deployed to Azure the sample uses managed identity and a virtual network to make sure deployment is secure by default. You can control whether a VNet is used to secure storage in the sample by setting `VNET_ENABLED` to true or false in the AZD parameters.
 
-This sample implements a simple function that copies PDF files from an `unprocessed-pdf` container to a `processed-pdf` container when new blobs are created using Azure SDK types. This straightforward example showcases how to use the Event Grid blob trigger to automatically respond to blob creation events in near real-time.
+This sample implements a simple function that copies PDF files from an `unprocessed-pdf` container to a `processed-pdf` container when new blobs are created using byte array bindings. This straightforward example showcases how to use the Event Grid blob trigger to automatically respond to blob creation events in near real-time.
 
 ![Architecture diagram for Azure Functions Event Grid Blob Trigger](./img/architecture.png)
 
@@ -113,42 +113,35 @@ Now that the storage emulator is running, has files on the `unprocessed-pdf` con
 
 ## Source Code
 
-The function code for the `ProcessBlobUpload` endpoint is defined in [`ProcessBlobUpload.java`](./src/src/main/java/com/microsoft/azure/samples/ProcessBlobUpload.java). The `@FunctionName` annotation applied to the async `run` method sets the name of the function endpoint. It binds to BlobClient on the trigger, and to BlobContainerClient on the input binding. The function code then uploads to the destination container using the input stream from BlobClient from the blob being processed.
+The function code for the `ProcessBlobUpload` endpoint is defined in [`ProcessBlobUpload.java`](./src/src/main/java/com/microsoft/azure/samples/ProcessBlobUpload.java). The `@FunctionName` annotation applied to the `run` method sets the name of the function endpoint. It uses a byte array for the blob trigger and an output binding to copy the processed blob to the destination container.
 
-    ```java
-    @FunctionName("ProcessBlobUpload")
-    @StorageAccount("PDFProcessorSTORAGE")
-    public void run(
-        @BlobTrigger(
-            name = "inputBlob",
-            path = "unprocessed-pdf/{name}",
-            source = "EventGrid"
-        ) BlobClient sourceBlob,
-        @BindingName("name") String blobName,
-        @BlobInput(
-            name = "outputBlobContainerClient",
-            path = "processed-pdf"
-        ) BlobContainerClient outputBlobContainerClient,
-        final ExecutionContext context) {
+```java
+@FunctionName("ProcessBlobUpload")
+@StorageAccount("PDFProcessorSTORAGE")
+public void run(
+    @BlobTrigger(
+        name = "sourceBlob",
+        path = "unprocessed-pdf/{name}",
+        source = "EventGrid"
+    ) byte[] sourceBlob,
+    @BindingName("name") String blobName,
+    @BlobOutput(
+        name = "outputBlob",
+        path = "processed-pdf/processed-{name}"
+    ) OutputBinding<byte[]> outputBlob,
+    final ExecutionContext context) {
 
-        Logger logger = context.getLogger();
-        long blobSize = sourceBlob.getProperties().getBlobSize();
-        logger.info(String.format("Java Blob Trigger (using Event Grid) processed blob\n Name: %s \n Size: %d bytes", blobName, blobSize));
+    Logger logger = context.getLogger();
+    long blobSize = sourceBlob.length;
+    logger.info(String.format("Java Blob Trigger (using Event Grid) processed blob\n Name: %s \n Size: %d bytes", blobName, blobSize));
 
-        // Copy the blob to the processed container with a new name
-        String newBlobName = "processed-" + blobName;
-        if (outputBlobContainerClient.getBlobClient(newBlobName).exists()) {
-            logger.info(String.format("Blob %s already exists in the processed container. Skipping upload.", newBlobName));
-            return;
-        }
-
-        // Here you can add any processing logic for the input blob before uploading it to the processed container.
-
-        //Uploading the blob to the processed container using streams. You could add processing of the input stream logic here if needed.
-        outputBlobContainerClient.getBlobClient(newBlobName).upload(sourceBlob.openInputStream(), true);
-        logger.info(String.format("PDF processing complete for %s. Blob copied to processed container with new name %s.", blobName, newBlobName));
-    }
-    ```
+    // Here you can add any processing logic for the input blob before uploading it to the processed container.
+    // For this example, we're just copying the blob content as-is
+    
+    outputBlob.setValue(sourceBlob);
+    logger.info(String.format("PDF processing complete for %s. Blob copied to processed container with new name processed-%s.", blobName, blobName));
+}
+```
 
 ## Verify that the files were copied
 
